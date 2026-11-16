@@ -97,6 +97,12 @@
                 required
             >
 
+            <div class="alert alert-info small mt-2 mb-2">
+                <strong>Informasi check-in:</strong> Pilih tanggal rencana mulai menempati kamar.
+                Booking baru dikonfirmasi setelah bukti pembayaran disetujui pemilik kos.
+                Hubungi pemilik kos sebelum datang untuk memastikan waktu serah terima kunci.
+            </div>
+
             @error('check_in')
                 <div class="text-danger small mt-1">{{ $message }}</div>
             @enderror

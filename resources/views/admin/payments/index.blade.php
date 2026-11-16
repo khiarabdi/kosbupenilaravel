@@ -226,6 +226,11 @@
                                                    name="status"
                                                    value="rejected">
 
+                                            <label for="reason-{{ $payment->id }}" class="small fw-semibold">Alasan Penolakan</label>
+                                            <textarea id="reason-{{ $payment->id }}" name="rejection_reason"
+                                                      class="form-control form-control-sm" rows="2"
+                                                      maxlength="1000" required
+                                                      placeholder="Contoh: bukti transfer tidak jelas"></textarea>
                                             <button type="submit"
                                                     class="btn btn-reject btn-sm w-100">
                                                 <i class="bi bi-x-circle me-1"></i>
@@ -236,6 +241,9 @@
                                     </div>
 
                                 @else
+                                    @if($payment->status === 'rejected' && $payment->rejection_reason)
+                                        <div class="text-danger small mb-1"><strong>Alasan:</strong> {{ $payment->rejection_reason }}</div>
+                                    @endif
                                     <span class="text-muted small">
                                         Sudah diverifikasi
                                     </span>

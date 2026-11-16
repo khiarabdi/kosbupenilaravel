@@ -16,6 +16,7 @@ class Payment extends Model
         'payment_date',
         'status',
         'notes',
+        'rejection_reason',
     ];
 
     protected function casts(): array

@@ -320,6 +320,16 @@
     Sistem Informasi Penyewaan Kos.
 </footer>
 
+@php($ownerWhatsapp = preg_replace('/[^0-9]/', '', (string) config('kos.owner_whatsapp')))
+@if($ownerWhatsapp && preg_match('/^62[0-9]{8,13}$/', $ownerWhatsapp))
+    <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ rawurlencode('Halo Bu Peni, saya ingin bertanya tentang kamar kos.') }}"
+       target="_blank" rel="noopener noreferrer"
+       aria-label="Chat WhatsApp Pemilik Kos"
+       style="position:fixed;bottom:22px;right:22px;z-index:1050;background:#25D366;color:#fff;padding:12px 17px;border-radius:99px;text-decoration:none;font-weight:700;box-shadow:0 5px 18px rgba(0,0,0,.18)">
+        Chat WhatsApp Pemilik Kos
+    </a>
+@endif
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 @stack('scripts')

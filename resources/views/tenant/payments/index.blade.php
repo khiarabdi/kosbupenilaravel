@@ -147,6 +147,13 @@
 
             </div>
 
+            @if($payment->status === 'rejected')
+                <div class="alert alert-danger mt-3 mb-0">
+                    <strong>Alasan penolakan:</strong>
+                    {{ $payment->rejection_reason ?: 'Silakan hubungi pemilik kos untuk informasi lebih lanjut.' }}
+                </div>
+            @endif
+
             <div class="d-flex flex-wrap gap-2 mt-4">
 
                 @if($payment->proof_path)

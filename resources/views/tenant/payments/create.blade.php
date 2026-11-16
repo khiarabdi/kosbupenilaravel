@@ -145,21 +145,21 @@
     <div class="payment-card">
     <h5 class="fw-bold mb-4">Informasi Rekening Pemilik Kos</h5>
 
-    <div class="alert alert-light border mb-3">
-        <div class="fw-bold text-primary mb-2">
-            <i class="bi bi-bank me-2"></i>
-            BANK BCA
+    @if(config('kos.bank_name') && config('kos.bank_account') && config('kos.bank_holder'))
+        <div class="alert alert-light border mb-3">
+            <div class="fw-bold text-primary mb-2"><i class="bi bi-bank me-2"></i>
+                {{ config('kos.bank_name') }}
+            </div>
+            <h3 class="fw-bold mb-1">{{ config('kos.bank_account') }}</h3>
+            <div class="text-muted">Atas Nama: {{ config('kos.bank_holder') }}</div>
         </div>
-
-        <h3 class="fw-bold mb-1">1234567890</h3>
-
-        <div class="text-muted">Atas Nama: Peni</div>
-    </div>
-
-    <p class="text-muted small mb-0">
-        Silakan transfer sesuai nominal pembayaran ke rekening di atas,
-        kemudian unggah bukti transfer.
-    </p>
+        <p class="text-muted small mb-0">Transfer sesuai nominal, kemudian unggah bukti pembayaran.</p>
+    @else
+        <div class="alert alert-warning">
+            Nomor rekening pemilik kos belum dikonfigurasi. <strong>Jangan melakukan transfer dulu.</strong>
+            Hubungi pemilik kos untuk informasi rekening yang valid.
+        </div>
+    @endif
 </div>
 
     <div class="payment-card">
@@ -218,7 +218,8 @@
                 Pastikan bukti transfer yang diunggah jelas dan sesuai dengan nominal pembayaran.
             </div>
 
-            <button type="submit" class="btn btn-green w-100">
+            <button type="submit" class="btn btn-green w-100"
+                    @if(!config('kos.bank_name') || !config('kos.bank_account') || !config('kos.bank_holder')) disabled @endif>
                 <i class="bi bi-send me-2"></i>
                 Kirim Bukti Pembayaran
             </button>

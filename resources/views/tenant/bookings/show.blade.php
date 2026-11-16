@@ -286,6 +286,15 @@
                     </div>
                 </div>
 
+                @if($payment->status === 'rejected')
+                    <div class="col-12">
+                        <div class="alert alert-danger mb-0">
+                            <strong>Alasan pembayaran ditolak:</strong>
+                            {{ $payment->rejection_reason ?: 'Silakan hubungi pemilik kos untuk informasi lebih lanjut.' }}
+                        </div>
+                    </div>
+                @endif
+
                 @if($payment->proof_path)
                     <div class="col-12">
                         <a href="{{ asset('storage/' . $payment->proof_path) }}"

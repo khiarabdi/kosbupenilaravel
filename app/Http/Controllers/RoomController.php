@@ -80,6 +80,10 @@ class RoomController extends Controller
                 ->store('rooms', 'public');
         }
 
+        if ($validated['status'] === 'available' && $room->bookings()->where('status', 'approved')->exists()) {
+            return back()->withInput()->with('error', 'Kamar dengan booking disetujui tidak boleh diubah menjadi tersedia.');
+        }
+
         $room->update($validated);
 
         return redirect()->route('admin.rooms.index')
@@ -110,7 +114,11 @@ class RoomController extends Controller
     // Mengubah status ketersediaan kamar
     public function toggleStatus(Room $room)
     {
-        $room->status = $room->status === 'available'
+        if ($room->status === 'full' && $room->bookings()->where('status', 'approved')->exists()) {
+            return back()->with('error', 'Kamar dengan booking aktif tidak dapat dijadikan tersedia.');
+        }
+
+        $room->status = $room->status === 'available' 
             ? 'full'
             : 'available';
 

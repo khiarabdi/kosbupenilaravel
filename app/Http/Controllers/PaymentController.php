@@ -50,6 +50,10 @@ class PaymentController extends Controller
             return back()->with('error', 'Pembayaran sebelumnya masih menunggu verifikasi.');
         }
 
+        if (!config('kos.bank_name') || !config('kos.bank_account') || !config('kos.bank_holder')) {
+            return back()->with('error', 'Rekening pemilik kos belum dikonfigurasi. Pembayaran belum dapat dikirim.');
+        }
+
         $validated = $request->validate([
             'payment_method' => [
                 'required',
@@ -120,36 +124,49 @@ class PaymentController extends Controller
         return view('admin.payments.index', compact('payments'));
     }
 
-    // Verifikasi pembayaran oleh admin
+    // Verifikasi pembayaran oleh admin (atomic & aman dari klik bersamaan)
     public function verify(Request $request, Payment $payment)
     {
         $validated = $request->validate([
-            'status' => [
-                'required',
-                'in:approved,rejected',
-            ],
+            'status' => ['required', 'in:approved,rejected'],
+            'rejection_reason' => ['required_if:status,rejected', 'nullable', 'string', 'max:1000'],
+        ], [
+            'rejection_reason.required_if' => 'Alasan penolakan wajib diisi jika pembayaran ditolak.',
         ]);
 
-        if ($payment->status !== 'pending') {
-            return back()->with('error', 'Pembayaran ini sudah pernah diverifikasi.');
-        }
+        $result = DB::transaction(function () use ($payment, $validated) {
+            $booking = Booking::whereKey($payment->booking_id)->lockForUpdate()->firstOrFail();
+            $room = $booking->room()->lockForUpdate()->firstOrFail();
+            $currentPayment = Payment::whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
-        DB::transaction(function () use ($payment, $validated) {
-            $payment->update([
-                'status' => $validated['status'],
-            ]);
+            if ($currentPayment->status !== 'pending' || $booking->status !== 'pending') {
+                return ['error' => 'Pembayaran atau booking ini sudah diverifikasi.'];
+            }
 
-            $payment->booking()->update([
-                'status' => $validated['status'] === 'approved'
-                    ? 'approved'
-                    : 'pending',
-            ]);
+            if ($validated['status'] === 'approved') {
+                // Mencegah dua booking berbeda memperoleh kamar yang sama.
+                if ($room->status !== 'available' || $room->bookings()
+                    ->where('status', 'approved')->where('id', '!=', $booking->id)->exists()) {
+                    return ['error' => 'Kamar sudah penuh. Pembayaran tidak dapat disetujui.'];
+                }
+
+                $currentPayment->update(['status' => 'approved', 'rejection_reason' => null]);
+                $booking->update(['status' => 'approved']);
+                $room->update(['status' => 'full']);
+
+                return ['success' => 'Pembayaran disetujui, booking dikonfirmasi, dan kamar otomatis penuh.'];
+            } else {
+                $currentPayment->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => trim($validated['rejection_reason']),
+                ]);
+                $booking->update(['status' => 'pending']);
+                // Penolakan tidak mengubah status kamar. Admin dapat menerima bukti baru.
+                return ['success' => 'Pembayaran ditolak dan alasan telah dikirim ke penyewa. Status kamar tidak berubah.'];
+            }
         });
 
-        $message = $validated['status'] === 'approved'
-            ? 'Pembayaran berhasil disetujui dan booking dikonfirmasi.'
-            : 'Pembayaran ditolak. Penyewa dapat mengirim ulang bukti pembayaran.';
-
-        return back()->with('success', $message);
+        return back()->with(isset($result['error']) ? 'error' : 'success',
+            $result['error'] ?? $result['success']);
     }
 }
